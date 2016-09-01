@@ -6,10 +6,6 @@ on all repo
 from .github_login import login
 
 REPO_TO_IGNORE = [
-    'odoo-community.org',
-    'community-data-files',
-    'contribute-md-template',
-    'website',
     ]
 
 # here is the list of labels we need in each repo
@@ -24,13 +20,16 @@ all_labels = {
     'needs review': 'fbca04',
     'work in progress': '0052cc',
     'wontfix': 'ffffff',
+    'stable': '35c300',
+    'release': '73c056',
+    'trunk': 'a2c295',
     }
 
 
 def main():
     gh = login()
 
-    all_repos = gh.iter_user_repos('OCA')
+    all_repos = gh.iter_user_repos('Elico-Corp')
 
     for repo in all_repos:
         if repo.name in REPO_TO_IGNORE:
