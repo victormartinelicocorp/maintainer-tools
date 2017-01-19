@@ -25,10 +25,10 @@
     "data": [
         "security/some_model_security.xml",
         "security/ir.model.access.csv",
-        "views/assets.xml",
+        "templates/assets.xml",
         "views/report_name.xml",
         "views/res_partner_view.xml",
-        "wizard/wizard_model_view.xml",
+        "wizards/wizard_model_view.xml",
     ],
     "demo": [
         "demo/res_partner_demo.xml",

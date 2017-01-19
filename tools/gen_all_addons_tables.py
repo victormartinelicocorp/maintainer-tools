@@ -14,7 +14,7 @@ import subprocess
 import sys
 
 
-BRANCHES = ['8.0', '9.0']
+BRANCHES = ['8.0', '9.0', '10.0']
 
 
 class FatalError(RuntimeError):
@@ -62,7 +62,7 @@ def main():
                           '-m', '[UPD] addons table in README.md',
                           'README.md'],
                          cwd=d)
-                    call(['git', 'push', 'origin'], cwd=d)
+                    call(['git', 'push', 'origin', branch], cwd=d)
             except NonFatalError:
                 logging.exception("Error in %s", d, exc_info=True)
 

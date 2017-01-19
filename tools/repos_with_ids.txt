@@ -34,7 +34,7 @@
  91|github.com/OCA/account-financial-reporting
 117|github.com/OCA/hr-timesheet
 96|github.com/OCA/account-payment
-99|github.com/OCA/carrier-delivery
+99|github.com/OCA/delivery-carrier
 115|github.com/OCA/geospatial
 131|github.com/OCA/manufacture-reporting
 183|github.com/OCA/vertical-community
@@ -123,3 +123,8 @@
 222|github.com/OCA/business-requirement
 223|github.com/OCA/l10n-cambodia
 224|github.com/OCA/infrastructure-dns
+225|github.com/OCA/website-cms
+226|github.com/OCA/edi
+227|github.com/OCA/intrastat
+229|github.com/OCA/interface-github
+230|github.com/OCA/queue

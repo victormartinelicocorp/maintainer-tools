@@ -52,7 +52,7 @@ Bug Tracker
 Bugs are tracked on `GitHub Issues
 <https://github.com/OCA/{project_repo}/issues>`_. In case of trouble, please
 check there if your issue has already been reported. If you spotted it first,
-help us smashing it by providing a detailed and welcomed feedback.
+help us smash it by providing detailed and welcomed feedback.
 
 Credits
 =======
@@ -67,6 +67,14 @@ Contributors
 
 * Firstname Lastname <email.address@example.org>
 * Second Person <second.person@example.org>
+
+Funders
+-------
+
+The development of this module has been financially supported by:
+
+* Company 1 name
+* Company 2 name
 
 Maintainer
 ----------

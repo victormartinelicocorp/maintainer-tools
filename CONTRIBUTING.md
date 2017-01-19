@@ -40,7 +40,9 @@ section.
         * [No SQL Injection](#no-sql-injection)
         * [Never commit the transaction](#never-commit-the-transaction)
       * [Do not bypass the ORM](#do-not-bypass-the-orm)
-      * [Field](#field)
+      * [Models](#models)
+      * [Fields](#fields)
+      * [Exceptions](#exceptions)
     * [Javascript](#javascript)
     * [CSS](#css)
     * [Tests](#tests)
@@ -72,7 +74,7 @@ section.
   I.e., if you want to combine Odoo's `crm` with OCA's `partner_firstname`, the
   name should be `crm_partner_firstname`.
 * Use the [description template](https://github.com/OCA/maintainer-tools/tree/master/template/module) but remove sections with no meaningful content.
-* In the `__openerp__.py`  manifest file:
+* In the `__openerp__.py`/`__manifest__.py`  manifest file:
   * Avoid empty keys
   * Make sure it has the `license` and `images` keys.
   * Make sure the text `,Odoo Community Association (OCA)` is appended
@@ -122,7 +124,11 @@ For `models`, `views` and `data` declarations, split files by the model
 involved, either created or inherited. These files should be named after the
 model. For example, demo data for res.partner should go in a file named
 `demo/res_partner.xml` and a view for partner should go in a file named
-`views/res_partner.xml`.
+`views/res_partner.xml`. An exception can be made when the model is a 
+model intended to be used only as a one2many model nested on the main 
+model. In this case, you can include the model definition inside it.
+Example `sale.order.line` model can be together with `sale.order` in
+the file `models/sale_order.py`.
 
 For model named `<main_model>` the following files may be created:
 
@@ -132,7 +138,9 @@ For model named `<main_model>` the following files may be created:
 * `templates/<main_model>.xml`
 * `views/<main_model>.xml`
 
-For `controller`, the only file should be named `main.py`.
+For `controller`, if there is only one file it should be named `main.py`.
+If there are several controller classes or functions you can split them into
+several files.
 
 For `static files`, the name pattern is `<module_name>.ext` (i.e.
 `static/js/im_chat.js`, `static/css/im_chat.css`, `static/xml/im_chat.xml`,
@@ -245,6 +253,10 @@ When declaring a record in XML:
   action/menu/views, the convention may not be applicable.
 * Use naming convention defined at the next point
 * The tag `<data>` is only used to set not-updatable data with `noupdate=1`
+  when your data file contains a mix of "noupdate" data. Otherwise, you should
+  use one of these:
+  - `<odoo>`: for `noupdate=0`
+  - `<odoo noupdate='1'>`
 * Do not prefix the xmlid by the current module's name
   (`<record id="view_id"...`, not `<record id="current_module.view_id"...`)
 
@@ -414,15 +426,20 @@ An entry in `python` needs to be in `PYTHONPATH`, check by running
 `python -c "import external_dependency_python_N"`.
 
 #### ImportError
-In python files where you use `import external_dependency_python_N` you will
+In python files where you use external dependencies you will
 need to add `try-except` with a debug log.
 
 ```python
 try:
-  import external_dependency_python_N
-except ImportError:
-  _logger.debug('Cannot `import external_dependency_python_N`.')
+    import external_dependency_python_N
+    import external_dependency_python_M
+    EXTERNAL_DEPENDENCY_BINARY_N_PATH = tools.find_in_path('external_dependency_binary_N')
+    EXTERNAL_DEPENDENCY_BINARY_M_PATH = tools.find_in_path('external_dependency_binary_M')
+except (ImportError, IOError) as err:
+    _logger.debug(err)
 ```
+This rule doesn't apply to the test files since these files are loaded only when
+running tests and in such a case your module and their external dependencies are installed.
 
 #### README
 If your module uses extra dependencies of python or binaries, please explain
@@ -676,9 +693,9 @@ Unless:
             # Create a new environment with new cursor database
             new_env = api.Environment(new_cr, self.env.uid, self.env.context)
             # with_env replace original env for this method
+            # A good comment here of why this isolated transaction is required.
             self.with_env(new_env).write({'name': 'hello'})  # isolated transaction to commit
-            new_env.cr.commit()  # Don't show a invalid-commit in this case
-        # You don't need close your cr because is closed when finish "with"
+        # You don't need to close nor to commit your cursor as they are done when exiting "with" block
     # You don't need clear caches because is cleared when finish "with"
   ```
 
@@ -710,18 +727,10 @@ auction_lots_ids = self.search(cr, uid, [
 ])
 ```
 
-### Field
-* `One2Many` and `Many2Many` fields should always have `_ids` as suffix
-  (example: sale_order_line_ids)
-* `Many2One` fields should have `_id` as suffix
-  (example: partner_id, user_id, ...)
-* If the technical name of the field (the variable name) is the same to the
-  string of the label, don't put `string` parameter for new API fields, because
-  it's automatically taken. If your variable name contains "_" in the name,
-  they are converted to spaces when creating the automatic string and each word
-  is capitalized.
-  (example: old api `'name': fields.char('Name', ...)`
-            new api `'name': fields.Char(...)`)
+### Models
+* Model names
+    * Use dot lowercase name for models. Example: `sale.order`
+    * Use name in a singular form. `sale.order` instead of `sale.orders`
 * Method conventions
     * Compute Field: the compute method pattern is `_compute_<field_name>`
     * Inverse method: the inverse method pattern is `_inverse_<field_name>`
@@ -735,15 +744,6 @@ auction_lots_ids = self.search(cr, uid, [
       `self.ensure_one()` at the beginning of the method.
     * `@api.one` method: For v8 is recommended use `@api.multi` and avoid use
       `@api.one`, for compatibility with v9 where is deprecated `@api.one`.
-
-* Default functions should be declared with a lambda call on self. The reason
-  for this is so a default function can be inherited. Assigning a function
-  pointer directly to the `default` parameter does not allow for inheritance.
-
-  ```python
-  a_field(..., default=lambda self: self._default_get())
-  ```
-
 * In a Model attribute order should be
     1. Private attributes (`_name`, `_description`, `_inherit`, ...)
     2. Default method and `_default_get`
@@ -812,6 +812,42 @@ class Event(models.Model):
     def mail_user_confirm(self):
         ...
 ```
+
+
+### Fields
+* `One2Many` and `Many2Many` fields should always have `_ids` as suffix
+  (example: sale_order_line_ids)
+* `Many2One` fields should have `_id` as suffix
+  (example: partner_id, user_id, ...)
+* If the technical name of the field (the variable name) is the same to the
+  string of the label, don't put `string` parameter for new API fields, because
+  it's automatically taken. If your variable name contains "_" in the name,
+  they are converted to spaces when creating the automatic string and each word
+  is capitalized.
+  (example: old api `'name': fields.char('Name', ...)`
+            new api `'name': fields.Char(...)`)
+* Default functions should be declared with a lambda call on self. The reason
+  for this is so a default function can be inherited. Assigning a function
+  pointer directly to the `default` parameter does not allow for inheritance.
+
+  ```python
+  a_field(..., default=lambda self: self._default_get())
+  ```
+
+### Exceptions
+  The `pass` into block except is not a good practice!
+
+  By including the `pass` we assume that our algorithm can continue to function after the exception occurred
+
+  If you really need to use the `pass` consider logging that exception
+
+  ```python
+    try:
+        sentences
+    except:
+        _logger.debug('Why the exception is safe....', exc_info=1))
+  ```
+
 
 ## Javascript
 
@@ -943,7 +979,7 @@ Further reading:
   * Test: means you tested it functionally speaking
 
 While making the merge, please respect the author using the `--author` option
-when committing. The author is found using the bzr log command. Use the commit
+when committing. The author is found using the git log command. Use the commit
 message provided by the contributor if any.
 
 #### It makes sense to be picky in the following cases:
@@ -973,9 +1009,15 @@ Pull requests can be closed if:
 
 ### Repositories
 
+#### Naming
+
 * Project name must not contain odoo or openerp
-* Project name for localization is "l10n_belgium" for Belgium
+* Project name for localization is "l10n-belgium" for Belgium
 * Project name for connectors is "connector-magento" for Magento connector
+
+#### Branch configuration
+Python packages to install, must be preferably, define in requirements.txt than travis.yml file. 
+Requirements.txt avoid to repeat packages in all travis.yml files of repositories in case of using with oca_dependencies.txt file.
 
 ### Issues
 
